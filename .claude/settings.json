@@ -1,8 +1,0 @@
-{
-    "hooks": {
-        "pre-commit": {
-            "command": "python .claude/hooks/spellcheck_and_protect.py",
-            "description": "Automated spell-checking and file protection before writes."
-        }
-    }
-}
