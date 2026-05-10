@@ -5,16 +5,6 @@ Last Update: 10th May 2026
 
 ---
 
-## Metadata
-
-| Role / Item | Details |
-|---|---|
-| Product Owner | Jatin Jain |
-| Engineering Lead | Tushar Parasrampuria |
-| Data Source | MCP integration with CardCurator.ai card database and store database |
-
----
-
 ## 1. Overview
 
 Cardwise is a credit card optimization platform that tells users which card to pull out of their wallet for every purchase. Users enter the cards they own, select a spending category or describe a purchase in natural language, and Cardwise instantly ranks the best card to use based on rewards, cashback, ROI (rewards minus annual fees), and category bonuses.
@@ -397,14 +387,3 @@ We do NOT store card numbers, bank credentials, or financial data. We only store
 - No social features or sharing
 
 ---
-
-# Open Questions
-
-| Question | Owner | Status |
-|---|---|---|
-| What is the MCP endpoint structure for CardCurator card data? | Tushar | Open |
-| Do we need CardCurator API key or is MCP sufficient? | Tushar | Open |
-| How do we handle rotating quarterly categories (e.g., Chase Freedom 5% categories)? | Jatin | Open |
-| What is our affiliate partner for "Apply" links? | Jatin | Open |
-| Should the AI chat use GPT-4o, Claude, or a mix? | Both | Open |
-| How do we handle cards from the same issuer with overlapping benefits? | Jatin | Open |
