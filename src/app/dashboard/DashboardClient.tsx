@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import Fuse from "fuse.js"
-import { Search, Plus, Trash2, CreditCard, ArrowRight, Send, Bot, User, Loader2 } from "lucide-react"
+import { Search, Plus, Trash2, CreditCard, ArrowRight, Send, Bot, User, Loader2, ExternalLink } from "lucide-react"
 import { getCardImageUrl, formatIssuer } from "@/lib/cards"
+import Link from "next/link"
 import type { CardData } from "@/lib/cards"
 
 export default function DashboardClient({ user }: { user: any }) {
@@ -16,10 +17,17 @@ export default function DashboardClient({ user }: { user: any }) {
   const [searchResults, setSearchResults] = useState<CardData[]>([])
 
   // AI Chat state
-  const [chatMessages, setChatMessages] = useState<{role: "user"|"assistant", content: string}[]>([])
+  const [aiResult, setAiResult] = useState<{
+    myCard: CardData | null;
+    myCardReason: string;
+    bestOverallCard: CardData | null;
+    bestOverallReason: string;
+    merchant: string | null;
+    category: string;
+  } | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("")
   const [isChatLoading, setIsChatLoading] = useState(false)
-  const chatEndRef = useRef<HTMLDivElement>(null)
 
   // Load wallet from localStorage on mount
   useEffect(() => {
@@ -35,10 +43,7 @@ export default function DashboardClient({ user }: { user: any }) {
       .catch(err => { console.error(err); setIsLoading(false) })
   }, [])
 
-  // Scroll chat to bottom on new messages
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [chatMessages])
+  // Scroll chat to bottom on new messages (removed for single response layout)
 
   // Fuse search setup
   const fuse = useMemo(() => new Fuse(allCards, {
@@ -78,23 +83,78 @@ export default function DashboardClient({ user }: { user: any }) {
   const sendChatMessage = async () => {
     if (!chatInput.trim()) return
     const userMsg = chatInput.trim()
-    setChatInput("")
-    setChatMessages(prev => [...prev, { role: "user", content: userMsg }])
+    setAiResult(null)
+    setAiError(null)
     setIsChatLoading(true)
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMsg,
-          wallet: wallet.map(c => ({ name: c.name, issuer: c.issuer, annualFee: c.annualFee, universalCashbackPercent: c.universalCashbackPercent, currency: c.currency })),
-        }),
+        body: JSON.stringify({ message: userMsg }),
       })
       const data = await res.json()
-      setChatMessages(prev => [...prev, { role: "assistant", content: data.reply }])
+
+      if (!res.ok) {
+        setAiError(data.error || "An error occurred.")
+        return;
+      }
+
+      const { merchant, category, topCards } = data;
+
+      let myCard = null;
+      let myCardReason = "";
+
+      // 1. Find best card in wallet
+      if (wallet && wallet.length > 0) {
+        for (const suggested of topCards) {
+          const match = wallet.find((c: any) => 
+            suggested.name.toLowerCase().includes(c.name.toLowerCase()) || 
+            c.name.toLowerCase().includes(suggested.name.toLowerCase())
+          );
+          if (match) {
+            myCard = match;
+            myCardReason = suggested.reason;
+            break;
+          }
+        }
+        if (!myCard) {
+          myCard = wallet.reduce((prev: any, current: any) => 
+            (prev.universalCashbackPercent > current.universalCashbackPercent) ? prev : current
+          );
+          myCardReason = `Since you don't have a specialized card for ${merchant || category}, this card gives your highest base rate (${myCard.universalCashbackPercent}%).`;
+        }
+      }
+
+      // 2. Find best overall card from ALL cards
+      let bestOverallCard = null;
+      let bestOverallReason = "";
+      
+      if (allCards && allCards.length > 0 && topCards && topCards.length > 0) {
+        for (const suggested of topCards) {
+          const match = allCards.find((c: any) => 
+            suggested.name.toLowerCase().includes(c.name.toLowerCase()) || 
+            c.name.toLowerCase().includes(suggested.name.toLowerCase())
+          );
+          if (match) {
+            bestOverallCard = match;
+            bestOverallReason = suggested.reason;
+            break;
+          }
+        }
+      }
+
+      setAiResult({
+        myCard,
+        myCardReason,
+        bestOverallCard,
+        bestOverallReason,
+        merchant,
+        category
+      });
+      
     } catch {
-      setChatMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't process your request right now. Please check your API configuration." }])
+      setAiError("Sorry, I couldn't process your request right now. Please try again.")
     } finally {
       setIsChatLoading(false)
     }
@@ -184,33 +244,33 @@ export default function DashboardClient({ user }: { user: any }) {
   // ONBOARDING VIEW
   if (!hasCompletedOnboarding) {
     return (
-      <div className="max-w-xl mx-auto pt-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/10 mb-6">
-            <CreditCard className="w-8 h-8 text-indigo-400" />
+      <div className="max-w-xl mx-auto pt-16 font-sans">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-nd-gold/20 backdrop-blur-md mb-8 border border-nd-gold/50 rounded-2xl">
+            <CreditCard className="w-10 h-10 text-nd-gold" />
           </div>
-          <h2 className="text-3xl font-bold mb-3 tracking-tight">Let&apos;s build your wallet</h2>
-          <p className="text-slate-400">Add the credit cards you currently own to start.</p>
+          <h2 className="text-4xl font-black mb-4 tracking-tighter uppercase text-nd-white">Build Your Wallet</h2>
+          <p className="text-nd-muted font-bold tracking-widest uppercase">Add the credit cards you currently own to start.</p>
         </div>
         
-        <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-xl">
+        <div className="bg-nd-navy-light/30 backdrop-blur-xl border border-nd-navy-light/50 p-8 sm:p-10 rounded-3xl shadow-2xl">
           {searchBlock}
           
-          <div className="mt-8 mb-8">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 flex justify-between items-center">
+          <div className="mt-12 mb-10">
+            <h3 className="text-sm font-black text-nd-white uppercase tracking-widest mb-6 flex justify-between items-center border-b-2 border-nd-navy-light pb-4">
               <span>Added Cards</span>
-              <span className="bg-indigo-500/20 text-indigo-300 py-0.5 px-2 rounded-full text-xs">{wallet.length}</span>
+              <span className="bg-nd-gold text-nd-navy-dark py-1 px-3 text-xs shadow-[2px_2px_0_0_#ffffff]">{wallet.length}</span>
             </h3>
             {walletBlock}
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-slate-800/50">
+          <div className="flex justify-end pt-8 border-t border-nd-navy-light/50">
             <button 
               onClick={finishOnboarding}
               disabled={wallet.length === 0}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all shadow-lg shadow-indigo-500/20"
+              className="flex items-center gap-2 bg-nd-gold text-nd-navy-dark px-8 py-3 font-black uppercase tracking-widest hover:bg-nd-gold-light active:translate-y-1 disabled:opacity-50 transition-all rounded-xl shadow-lg border border-nd-gold/50"
             >
-              Continue to Dashboard <ArrowRight className="w-4 h-4" />
+              Continue to Dashboard <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -219,116 +279,145 @@ export default function DashboardClient({ user }: { user: any }) {
   }
 
   // MAIN DASHBOARD VIEW
-  const totalFees = wallet.reduce((sum, card) => sum + card.annualFee, 0)
+  const totalFees = wallet.reduce((sum, card) => sum + (card.annualFee || 0), 0)
+  
+  const totalOpeningPoints = wallet.reduce((sum, card) => {
+    const firstOffer = card.offers?.[0];
+    if (!firstOffer) return sum;
+    const points = firstOffer.amount?.[0]?.amount || 0;
+    return sum + points;
+  }, 0);
+  
+  const formattedOpeningPoints = totalOpeningPoints > 1000 
+    ? (totalOpeningPoints / 1000).toFixed(0) + "K" 
+    : totalOpeningPoints.toString();
+
   const hour = new Date().getHours()
   const timeGreeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening"
   const firstName = user?.name?.split(" ")[0] || "there"
   
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold tracking-tight mb-1">{timeGreeting}, {firstName} 👋</h2>
-        <p className="text-slate-400">Here&apos;s a summary of your current card setup.</p>
+    <div className="max-w-6xl mx-auto font-sans">
+      <div className="mb-12 border-b border-nd-navy-light/50 pb-6">
+        <h2 className="text-4xl font-black tracking-tighter mb-2 text-nd-white uppercase">{timeGreeting}, {firstName}</h2>
+        <p className="text-nd-muted text-lg tracking-wide uppercase font-semibold">Your Wallet Overview</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg hover:border-slate-700 transition-colors">
-          <h3 className="text-slate-400 text-sm mb-2 font-medium">Total Cards</h3>
-          <p className="text-4xl font-bold text-white tracking-tight">{wallet.length}</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg hover:border-slate-700 transition-colors">
-          <h3 className="text-slate-400 text-sm mb-2 font-medium">Total Annual Fees</h3>
-          <p className="text-4xl font-bold text-white tracking-tight">${totalFees}</p>
-        </div>
-        <div className="bg-gradient-to-br from-indigo-900/50 to-purple-900/50 border border-indigo-500/30 p-6 rounded-2xl shadow-lg relative overflow-hidden group">
-          <div className="absolute -top-4 -right-4 p-4 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
-            <CreditCard className="w-32 h-32" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <Link href="/cards" className="block bg-nd-gold/90 backdrop-blur-xl border border-nd-gold/50 p-8 rounded-3xl shadow-xl hover:bg-nd-gold transition-all cursor-pointer group">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-nd-navy-dark text-xs tracking-[0.2em] font-bold uppercase mb-4">Total Cards</h3>
+              <p className="text-6xl font-black text-nd-navy-dark">{wallet.length}</p>
+            </div>
+            <ArrowRight className="w-8 h-8 text-nd-navy-dark group-hover:translate-x-2 transition-transform" />
           </div>
-          <h3 className="text-indigo-200 text-sm mb-2 font-medium relative z-10">Wallet Optimization</h3>
-          <p className="text-4xl font-bold text-white tracking-tight relative z-10">Good</p>
+        </Link>
+        <div className="bg-nd-gold/90 backdrop-blur-xl border border-nd-gold/50 p-8 rounded-3xl shadow-xl">
+          <h3 className="text-nd-navy-dark text-xs tracking-[0.2em] font-bold uppercase mb-4">Annual Fees</h3>
+          <p className="text-6xl font-black text-nd-navy-dark">${totalFees}</p>
+        </div>
+        <div className="bg-nd-gold/90 backdrop-blur-xl border border-nd-gold/50 p-8 rounded-3xl shadow-xl">
+          <h3 className="text-nd-navy-dark text-xs tracking-[0.2em] font-bold uppercase mb-4">Welcome Bonus Pts</h3>
+          <p className="text-6xl font-black text-nd-navy-dark tracking-tighter">{formattedOpeningPoints}</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Manage Wallet */}
-        <div className="lg:col-span-2">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg mb-8">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold tracking-tight">Manage Wallet</h2>
-              <p className="text-slate-400 text-sm">Add new cards or remove old ones to keep your recommendations accurate.</p>
-            </div>
-            {searchBlock}
-            {walletBlock}
-          </div>
+      {/* Ask AI Section */}
+      <div className="mb-16 relative group">
+        <div className="relative z-10 bg-nd-navy-light/30 backdrop-blur-xl flex items-center border border-nd-navy-light/50 rounded-2xl shadow-xl">
+          <Bot className="ml-6 h-8 w-8 text-nd-gold" />
+          <input 
+            type="text" 
+            placeholder="WHERE ARE YOU SHOPPING TODAY?" 
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendChatMessage()}
+            className="w-full bg-transparent py-6 pl-6 pr-6 text-xl font-bold uppercase tracking-wide focus:outline-none text-nd-white placeholder-nd-muted" 
+          />
+          <button 
+            onClick={sendChatMessage}
+            disabled={isChatLoading || !chatInput.trim()}
+            className="mr-3 bg-nd-gold px-8 py-4 text-nd-navy-dark font-black tracking-widest uppercase hover:bg-nd-gold-light disabled:opacity-50 transition-colors rounded-xl shadow-lg active:translate-y-1"
+          >
+            ASK
+          </button>
         </div>
-        
-        {/* Right Column: AI Chat */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg flex flex-col" style={{ minHeight: "420px" }}>
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2 tracking-tight">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              Ask AI
-            </h3>
-            
-            {/* Chat messages */}
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1" style={{ maxHeight: "300px" }}>
-              {chatMessages.length === 0 && (
-                <div className="text-center py-8">
-                  <Bot className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                  <p className="text-sm text-slate-500">Ask me anything about your cards!</p>
-                  <p className="text-xs text-slate-600 mt-1">e.g. &quot;Best card for groceries?&quot;</p>
+
+        {/* Analysis Result Area */}
+        {(aiResult || isChatLoading || aiError) && (
+          <div className="mt-12 pt-10 border-t border-nd-navy-light/50 relative z-10">
+            {isChatLoading ? (
+              <div className="flex gap-6 justify-start">
+                <div className="w-16 h-16 bg-nd-gold/20 backdrop-blur-md border border-nd-gold/50 rounded-2xl flex items-center justify-center shrink-0">
+                  <Bot className="w-8 h-8 text-nd-gold animate-pulse" />
                 </div>
-              )}
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  {msg.role === "assistant" && (
-                    <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-3.5 h-3.5 text-indigo-400" />
+                <div className="bg-nd-navy-light/30 backdrop-blur-xl border border-nd-navy-light/50 rounded-2xl px-8 py-5 flex items-center gap-4 shadow-xl">
+                  <Loader2 className="w-6 h-6 text-nd-gold animate-spin" />
+                  <span className="text-nd-white font-bold tracking-widest uppercase">Analyzing Data...</span>
+                </div>
+              </div>
+            ) : aiError ? (
+              <div className="bg-red-900/40 backdrop-blur-xl border border-red-500/50 rounded-2xl p-6 text-white font-bold tracking-widest uppercase shadow-xl">
+                {aiError}
+              </div>
+            ) : aiResult ? (
+              <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-300">
+                <h3 className="text-2xl font-black text-nd-white uppercase tracking-tight border-l-4 border-nd-gold pl-4">
+                  ANALYSIS: <span className="text-nd-gold">{aiResult.merchant || aiResult.category}</span>
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
+                  {/* Your Best Card */}
+                  <div className="bg-nd-navy-light/30 backdrop-blur-xl border border-nd-navy-light/50 p-8 rounded-3xl relative shadow-xl flex flex-col overflow-hidden">
+                    <div className="absolute top-0 right-0 bg-nd-gold text-nd-navy-dark text-xs font-black px-4 py-2 uppercase tracking-[0.2em] rounded-bl-2xl">
+                      USE THIS CARD
+                    </div>
+                    {aiResult.myCard ? (
+                      <div className="flex flex-col gap-6 mt-6 flex-1">
+                        <CardImage card={aiResult.myCard} size="lg" />
+                        <div>
+                          <div className="font-black text-nd-white text-2xl uppercase tracking-tight mb-2">{aiResult.myCard.name}</div>
+                          <p className="text-nd-offwhite font-medium text-lg leading-snug border-l-2 border-nd-gold pl-4">{aiResult.myCardReason}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-nd-muted font-bold tracking-widest uppercase mt-8">NO CARDS IN WALLET</div>
+                    )}
+                  </div>
+                  
+                  {/* Best Overall Card */}
+                  {aiResult.bestOverallCard && (aiResult.myCard?.cardId !== aiResult.bestOverallCard.cardId) && (
+                    <div className="bg-nd-navy-dark/40 backdrop-blur-xl border border-nd-navy-light/30 p-8 rounded-3xl relative shadow-xl flex flex-col overflow-hidden">
+                      <div className="absolute top-0 right-0 bg-nd-muted text-nd-navy-dark text-xs font-black px-4 py-2 uppercase tracking-[0.2em] rounded-bl-2xl">
+                        TOP ALTERNATIVE
+                      </div>
+                      <div className="flex flex-col gap-6 mt-6 flex-1">
+                        <CardImage card={aiResult.bestOverallCard} size="lg" />
+                        <div className="flex-1">
+                          <div className="font-black text-nd-white text-2xl uppercase tracking-tight mb-2">{aiResult.bestOverallCard.name}</div>
+                          <p className="text-nd-muted font-medium text-lg leading-snug">{aiResult.bestOverallReason}</p>
+                        </div>
+                        {aiResult.bestOverallCard.url && (
+                          <div className="pt-6 mt-auto">
+                            <a 
+                              href={aiResult.bestOverallCard.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center gap-3 w-full bg-nd-white/10 hover:bg-nd-white/20 text-nd-white py-4 rounded-xl font-black tracking-widest uppercase transition-colors border border-nd-white/30 backdrop-blur-md"
+                            >
+                              APPLY NOW <ExternalLink className="w-5 h-5" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
-                  <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === "user" ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-200 border border-slate-700"}`}>
-                    {msg.content}
-                  </div>
-                  {msg.role === "user" && (
-                    <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-3.5 h-3.5 text-slate-300" />
-                    </div>
-                  )}
                 </div>
-              ))}
-              {isChatLoading && (
-                <div className="flex gap-2 justify-start">
-                  <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
-                    <Bot className="w-3.5 h-3.5 text-indigo-400" />
-                  </div>
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2">
-                    <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-            
-            {/* Chat input */}
-            <div className="relative mt-auto">
-              <input 
-                type="text" 
-                placeholder="e.g. Best card for groceries?" 
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendChatMessage()}
-                className="w-full bg-slate-950/50 border border-slate-700 rounded-lg py-3 px-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow text-white placeholder-slate-500" 
-              />
-              <button 
-                onClick={sendChatMessage}
-                disabled={isChatLoading || !chatInput.trim()}
-                className="absolute right-2 top-2 bg-indigo-600 p-1.5 rounded-md text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+              </div>
+            ) : null}
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

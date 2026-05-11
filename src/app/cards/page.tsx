@@ -10,20 +10,20 @@ export default async function MyCardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
-      <header className="border-b border-slate-800/80 bg-slate-900/50 sticky top-0 z-50 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-nd-navy-dark text-nd-offwhite font-sans selection:bg-nd-gold/30">
+      <header className="border-b-2 border-nd-gold bg-nd-navy sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <a href="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">C</div>
-              <h1 className="text-xl font-bold tracking-tight">Cardwise</h1>
+            <a href="/dashboard" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+              <div className="w-10 h-10 bg-nd-gold rounded-none flex items-center justify-center font-bold text-nd-navy-dark text-xl uppercase tracking-tighter shadow-[4px_4px_0_0_#ffffff]">C</div>
+              <h1 className="text-2xl font-bold tracking-widest uppercase text-nd-white">Cardwise</h1>
             </a>
           </div>
-          <a href="/dashboard" className="text-sm text-slate-400 hover:text-white transition-colors">← Back to Dashboard</a>
+          <a href="/dashboard" className="text-sm font-bold tracking-widest uppercase text-nd-gold hover:text-nd-white transition-colors">← Back to Dashboard</a>
         </div>
       </header>
 
-      <main className="px-6 py-8">
+      <main className="px-6 py-12">
         <MyCardsClient />
       </main>
     </div>

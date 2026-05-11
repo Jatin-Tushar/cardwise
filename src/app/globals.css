@@ -46,6 +46,16 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-nd-navy: #0C2340;
+  --color-nd-navy-dark: #08182b;
+  --color-nd-navy-light: #163863;
+  --color-nd-gold: #C99700;
+  --color-nd-gold-light: #e0b016;
+  --color-nd-gold-dark: #9e7600;
+  --color-nd-white: #ffffff;
+  --color-nd-offwhite: #f8f9fa;
+  --color-nd-muted: #849ebd;
 }
 
 :root {

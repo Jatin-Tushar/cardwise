@@ -6,6 +6,11 @@ import { Search, Plus, Trash2, CreditCard, ExternalLink, X, ChevronDown } from "
 import { getCardImageUrl, formatIssuer } from "@/lib/cards"
 import type { CardData } from "@/lib/cards"
 
+const formatNetwork = (network: string) => {
+  if (!network) return ""
+  return network.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
 export default function MyCardsClient() {
   const [wallet, setWallet] = useState<CardData[]>([])
   const [allCards, setAllCards] = useState<CardData[]>([])
@@ -58,163 +63,146 @@ export default function MyCardsClient() {
     const imgUrl = getCardImageUrl(card.imageUrl)
     if (!imgUrl || imgError) {
       return (
-        <div className={`${sizeClasses[size]} rounded-lg bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center shadow-lg`}>
-          <CreditCard className={size === "lg" ? "w-10 h-10" : size === "md" ? "w-6 h-6" : "w-4 h-4"} />
+        <div className={`${sizeClasses[size]} bg-nd-navy-light/40 backdrop-blur-md flex items-center justify-center border border-nd-white/20 rounded-xl shadow-lg`}>
+          <CreditCard className={size === "lg" ? "w-10 h-10 text-nd-white" : size === "md" ? "w-6 h-6 text-nd-white" : "w-4 h-4 text-nd-white"} />
         </div>
       )
     }
-    return <img src={imgUrl} alt={card.name} className={`${sizeClasses[size]} rounded-lg object-cover shadow-lg border border-slate-700`} onError={() => setImgError(true)} />
+    return <img src={imgUrl} alt={card.name} className={`${sizeClasses[size]} object-cover border border-nd-white/20 rounded-xl shadow-lg`} onError={() => setImgError(true)} />
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-6xl mx-auto font-sans">
+      <div className="flex justify-between items-center mb-12 border-b border-nd-navy-light/50 pb-6">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight mb-1">My Cards</h2>
-          <p className="text-slate-400">{wallet.length} card{wallet.length !== 1 ? "s" : ""} in your wallet</p>
+          <h2 className="text-4xl font-black tracking-tighter mb-2 uppercase text-nd-white">My Cards</h2>
+          <p className="text-nd-muted font-bold tracking-widest uppercase">{wallet.length} card{wallet.length !== 1 ? "s" : ""} in your wallet</p>
         </div>
         <button
           onClick={() => setShowSearch(!showSearch)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-500 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20"
+          className="flex items-center gap-2 bg-nd-gold text-nd-navy-dark px-6 py-3 font-black uppercase tracking-widest hover:bg-nd-gold-light active:translate-y-1 transition-all rounded-xl shadow-lg border border-nd-gold/50"
         >
-          <Plus className="w-4 h-4" /> Add Card
+          <Plus className="w-5 h-5" /> Add Card
         </button>
       </div>
 
       {/* Add Card Search */}
       {showSearch && (
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl mb-8 relative">
-          <button onClick={() => { setShowSearch(false); setSearchQuery("") }} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+        <div className="bg-nd-navy-light/30 backdrop-blur-xl border border-nd-navy-light/50 p-8 rounded-3xl shadow-2xl mb-12 relative">
+          <button onClick={() => { setShowSearch(false); setSearchQuery("") }} className="absolute top-6 right-6 text-nd-muted hover:text-nd-white transition-colors">
+            <X className="w-6 h-6" />
           </button>
-          <h3 className="font-semibold mb-4">Search & Add a Card</h3>
+          <h3 className="font-black text-nd-white uppercase tracking-widest mb-6">Search & Add a Card</h3>
           <div className="relative">
-            <Search className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
+            <Search className="absolute left-4 top-4 h-6 w-6 text-nd-muted" />
             <input
               type="text"
-              placeholder={isLoading ? "Loading..." : `Search from ${allCards.length} cards...`}
+              placeholder={isLoading ? "LOADING..." : `SEARCH FROM ${allCards.length} CARDS...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
+              className="w-full bg-nd-navy-dark/50 border border-nd-navy-light/50 py-4 pl-14 pr-4 rounded-xl text-nd-white uppercase font-bold tracking-widest focus:outline-none focus:border-nd-gold transition-colors placeholder-nd-muted shadow-inner"
             />
           </div>
           {searchQuery && (
-            <div className="mt-2 bg-slate-800/95 border border-slate-700 rounded-xl max-h-72 overflow-y-auto">
+            <div className="mt-4 bg-nd-navy-dark/80 backdrop-blur-md border border-nd-navy-light/50 rounded-xl max-h-72 overflow-y-auto shadow-xl">
               {searchResults.length > 0 ? searchResults.map(card => (
-                <div key={card.cardId} className="flex items-center gap-3 p-3 border-b border-slate-700/50 hover:bg-slate-700/60 transition-colors cursor-pointer group" onClick={() => addToWallet(card)}>
+                <div key={card.cardId} className="flex items-center gap-4 p-4 border-b border-nd-navy-light/30 hover:bg-nd-navy-light/40 transition-colors cursor-pointer group" onClick={() => addToWallet(card)}>
                   <CardImageBlock card={card} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-slate-100 truncate">{card.name}</div>
-                    <div className="text-xs text-slate-400">{formatIssuer(card.issuer)} • ${card.annualFee}/yr</div>
+                    <div className="font-black text-nd-white uppercase tracking-wide truncate">{card.name}</div>
+                    <div className="text-xs text-nd-gold font-bold tracking-widest uppercase mt-1">{formatIssuer(card.issuer)} • ${card.annualFee}/YR</div>
                   </div>
-                  <Plus className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 transition-colors shrink-0" />
+                  <Plus className="w-6 h-6 text-nd-muted group-hover:text-nd-gold transition-colors shrink-0" />
                 </div>
-              )) : <div className="p-4 text-center text-slate-500">No cards found</div>}
+              )) : <div className="p-6 text-center font-bold tracking-widest uppercase text-nd-muted">No cards found</div>}
             </div>
           )}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cards Grid */}
-        <div className="lg:col-span-2">
-          {wallet.length === 0 ? (
-            <div className="bg-slate-900 border border-dashed border-slate-700 rounded-2xl p-12 text-center">
-              <CreditCard className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-500 mb-4">No cards in your wallet yet.</p>
-              <button onClick={() => setShowSearch(true)} className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                + Add your first card
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {wallet.map(card => (
+      <div>
+        {wallet.length === 0 ? (
+          <div className="bg-nd-navy-light/20 backdrop-blur-xl border border-nd-navy-light/50 rounded-3xl p-16 text-center max-w-2xl mx-auto shadow-2xl">
+            <CreditCard className="w-16 h-16 text-nd-muted mx-auto mb-6" />
+            <p className="text-nd-white font-bold tracking-widest uppercase mb-6 text-xl">No cards in your wallet yet.</p>
+            <button onClick={() => setShowSearch(true)} className="text-nd-gold hover:text-nd-white font-black tracking-widest uppercase transition-colors border-b-2 border-nd-gold pb-1 hover:border-nd-white">
+              + ADD YOUR FIRST CARD
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            {wallet.map(card => {
+              const isSelected = selectedCard?.cardId === card.cardId;
+              return (
                 <div
                   key={card.cardId}
-                  onClick={() => setSelectedCard(card)}
-                  className={`bg-slate-900 border rounded-2xl p-5 cursor-pointer transition-all hover:shadow-xl group ${selectedCard?.cardId === card.cardId ? "border-indigo-500 shadow-lg shadow-indigo-500/10" : "border-slate-800 hover:border-slate-700"}`}
+                  className={`bg-nd-navy-light/20 backdrop-blur-md border rounded-2xl transition-all group overflow-hidden ${isSelected ? "border-nd-gold shadow-lg shadow-nd-gold/20 scale-[1.02]" : "border-nd-navy-light/50 hover:border-nd-gold/50 shadow-lg hover:shadow-xl hover:bg-nd-navy-light/30"}`}
                 >
-                  <div className="flex items-start gap-4">
-                    <CardImageBlock card={card} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-slate-100 truncate group-hover:text-white transition-colors">{card.name}</div>
-                      <div className="text-xs text-slate-400 mt-1">{formatIssuer(card.issuer)}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{card.network}</div>
+                  <div className="p-6 cursor-pointer" onClick={() => setSelectedCard(isSelected ? null : card)}>
+                    <div className="flex items-start gap-6">
+                      <CardImageBlock card={card} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-black text-nd-white uppercase tracking-wide truncate group-hover:text-nd-gold transition-colors">{card.name}</div>
+                        <div className="text-xs text-nd-muted font-bold uppercase tracking-widest mt-2">{formatIssuer(card.issuer)}</div>
+                        <div className="text-xs text-nd-muted font-bold uppercase tracking-widest mt-1">{formatNetwork(card.network)}</div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-nd-navy-light/50">
+                      <div className="text-sm font-black text-nd-white uppercase tracking-widest">${card.annualFee}<span className="text-nd-muted">/YR</span></div>
+                      <div className="text-sm font-black text-nd-gold uppercase tracking-widest">{card.universalCashbackPercent}% BASE</div>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-800/50">
-                    <div className="text-sm text-slate-300">${card.annualFee}<span className="text-slate-500">/yr</span></div>
-                    <div className="text-sm text-indigo-400">{card.universalCashbackPercent}% base</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Card Details Panel */}
-        <div className="lg:col-span-1">
-          {selectedCard ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg sticky top-24">
-              <div className="flex justify-center mb-6">
-                <CardImageBlock card={selectedCard} size="lg" />
-              </div>
-              <h3 className="text-xl font-bold text-center mb-1">{selectedCard.name}</h3>
-              <p className="text-sm text-slate-400 text-center mb-6">{formatIssuer(selectedCard.issuer)}</p>
+                  {isSelected && (
+                    <div className="bg-nd-navy-dark/60 backdrop-blur-lg border-t border-nd-gold/50 p-6 px-8 animate-in slide-in-from-top-4 fade-in duration-300">
+                      <div className="space-y-4 mb-8">
+                        <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
+                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Network</span>
+                          <span className="text-sm font-black uppercase tracking-widest text-nd-white">{formatNetwork(card.network)}</span>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
+                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Annual Fee</span>
+                          <span className="text-sm font-black uppercase tracking-widest text-nd-white">${card.annualFee}{card.isAnnualFeeWaived ? " (waived)" : ""}</span>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
+                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Base Cashback</span>
+                          <span className="text-sm font-black uppercase tracking-widest text-nd-gold">{card.universalCashbackPercent}%</span>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
+                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Type</span>
+                          <span className="text-sm font-black uppercase tracking-widest text-nd-white">{card.isBusiness ? "Business" : "Personal"}</span>
+                        </div>
+                        {card.offers && card.offers.length > 0 && (
+                          <div className="py-3 border-b border-nd-navy-light/30">
+                            <span className="text-sm font-bold uppercase tracking-widest text-nd-muted block mb-2">Sign-up Bonus</span>
+                            <span className="text-sm font-black uppercase tracking-wide text-nd-gold">
+                              SPEND ${card.offers[0].spend?.toLocaleString()} IN {card.offers[0].days} DAYS
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between py-2 border-b border-slate-800/50">
-                  <span className="text-sm text-slate-400">Network</span>
-                  <span className="text-sm font-medium">{selectedCard.network}</span>
+                      <div className="flex gap-4">
+                        {card.url && (
+                          <a href={card.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex flex-1 items-center justify-center gap-3 bg-nd-white/10 hover:bg-nd-white/20 text-nd-white py-4 rounded-xl font-black tracking-widest uppercase transition-colors border border-nd-white/30 backdrop-blur-md">
+                            <ExternalLink className="w-5 h-5" /> VIEW SITE
+                          </a>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeFromWallet(card.cardId); }}
+                          className="flex flex-1 items-center justify-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 py-4 rounded-xl font-black tracking-widest uppercase transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5" /> REMOVE
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between py-2 border-b border-slate-800/50">
-                  <span className="text-sm text-slate-400">Annual Fee</span>
-                  <span className="text-sm font-medium">${selectedCard.annualFee}{selectedCard.isAnnualFeeWaived ? " (waived)" : ""}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-800/50">
-                  <span className="text-sm text-slate-400">Base Cashback</span>
-                  <span className="text-sm font-medium">{selectedCard.universalCashbackPercent}%</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-800/50">
-                  <span className="text-sm text-slate-400">Currency</span>
-                  <span className="text-sm font-medium">{selectedCard.currency}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-800/50">
-                  <span className="text-sm text-slate-400">Type</span>
-                  <span className="text-sm font-medium">{selectedCard.isBusiness ? "Business" : "Personal"}</span>
-                </div>
-                {selectedCard.offers && selectedCard.offers.length > 0 && (
-                  <div className="py-2 border-b border-slate-800/50">
-                    <span className="text-sm text-slate-400 block mb-1">Sign-up Bonus</span>
-                    <span className="text-sm font-medium text-emerald-400">
-                      Spend ${selectedCard.offers[0].spend?.toLocaleString()} in {selectedCard.offers[0].days} days
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                {selectedCard.url && (
-                  <a href={selectedCard.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-lg text-sm transition-colors">
-                    <ExternalLink className="w-4 h-4" /> View on Issuer Site
-                  </a>
-                )}
-                <button
-                  onClick={() => removeFromWallet(selectedCard.cardId)}
-                  className="flex items-center justify-center gap-2 w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-lg text-sm transition-colors border border-red-500/20"
-                >
-                  <Trash2 className="w-4 h-4" /> Remove from Wallet
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-slate-900 border border-dashed border-slate-700 rounded-2xl p-8 text-center sticky top-24">
-              <ChevronDown className="w-8 h-8 text-slate-600 mx-auto mb-3 animate-bounce" />
-              <p className="text-slate-500 text-sm">Select a card to view details</p>
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
