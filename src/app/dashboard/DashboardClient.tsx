@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import Fuse from "fuse.js"
-import { Search, Plus, Trash2, CreditCard, ArrowRight, Send, Bot, User, Loader2, ExternalLink } from "lucide-react"
+import { Search, Plus, Trash2, CreditCard, ArrowRight, Send, Bot, User, Loader2, ExternalLink, Sparkles } from "lucide-react"
 import { getCardImageUrl, formatIssuer } from "@/lib/cards"
 import Link from "next/link"
 import type { CardData } from "@/lib/cards"
@@ -28,6 +28,7 @@ export default function DashboardClient({ user }: { user: any }) {
   const [aiError, setAiError] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("")
   const [isChatLoading, setIsChatLoading] = useState(false)
+  const [showBreakdown, setShowBreakdown] = useState<'fees' | 'points' | null>(null)
 
   // Load wallet from localStorage on mount
   useEffect(() => {
@@ -169,13 +170,13 @@ export default function DashboardClient({ user }: { user: any }) {
   // Card image component
   const CardImage = ({ card, size = "sm" }: { card: CardData; size?: "sm" | "md" | "lg" }) => {
     const [imgError, setImgError] = useState(false)
-    const sizeClasses = { sm: "w-12 h-8", md: "w-20 h-13", lg: "w-32 h-20" }
+    const sizeClasses = { sm: "w-10 h-6", md: "w-14 h-9", lg: "w-24 h-16" }
     const imgUrl = getCardImageUrl(card.imageUrl)
 
     if (!imgUrl || imgError) {
       return (
-        <div className={`${sizeClasses[size]} rounded-md bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center shadow-md`}>
-          <CreditCard className={size === "sm" ? "w-4 h-4" : "w-6 h-6"} />
+        <div className={`${sizeClasses[size]} rounded-md bg-gradient-to-br from-nd-gold to-nd-gold-dark flex items-center justify-center shadow-sm`}>
+          <CreditCard className={size === "sm" ? "w-3 h-3 text-white" : "w-5 h-5 text-white"} />
         </div>
       )
     }
@@ -184,7 +185,7 @@ export default function DashboardClient({ user }: { user: any }) {
       <img
         src={imgUrl}
         alt={card.name}
-        className={`${sizeClasses[size]} rounded-md object-cover shadow-md border border-slate-700`}
+        className={`${sizeClasses[size]} rounded-md object-cover shadow-sm border border-nd-navy-light`}
         onError={() => setImgError(true)}
       />
     )
@@ -201,27 +202,27 @@ export default function DashboardClient({ user }: { user: any }) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           disabled={isLoading}
-          className="w-full bg-slate-950 border border-slate-700 rounded-lg py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow disabled:opacity-50"
+          className="w-full bg-white border border-nd-navy-light rounded-lg py-3 pl-10 pr-4 text-nd-white focus:outline-none focus:ring-2 focus:ring-nd-gold transition-shadow disabled:opacity-50"
         />
       </div>
       
       {searchQuery && (
-        <div className="absolute z-10 w-full mt-2 bg-slate-800/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
+        <div className="absolute z-10 w-full mt-2 bg-white/95 backdrop-blur-xl border border-nd-navy-light rounded-xl shadow-2xl max-h-80 overflow-y-auto">
           {searchResults.length > 0 ? (
             searchResults.map(card => (
-              <div key={card.cardId} className="flex items-center gap-3 p-3 border-b border-slate-700/50 hover:bg-slate-700/60 transition-colors cursor-pointer group" onClick={() => addToWallet(card)}>
+              <div key={card.cardId} className="flex items-center gap-3 p-3 border-b border-nd-navy-light hover:bg-nd-navy-dark transition-colors cursor-pointer group" onClick={() => addToWallet(card)}>
                 <CardImage card={card} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-slate-100 truncate">{card.name}</div>
-                  <div className="text-xs text-slate-400">{formatIssuer(card.issuer)} • {card.network} • ${card.annualFee}/yr</div>
+                  <div className="font-semibold text-nd-white truncate">{card.name}</div>
+                  <div className="text-xs text-nd-muted">{formatIssuer(card.issuer)} • {card.network} • ${card.annualFee}/yr</div>
                 </div>
-                <button className="text-slate-500 group-hover:text-indigo-400 transition-colors shrink-0">
+                <button className="text-nd-muted group-hover:text-nd-gold transition-colors shrink-0">
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
             ))
           ) : (
-            <div className="p-4 text-center text-slate-500">No cards found</div>
+            <div className="p-4 text-center text-nd-muted">No cards found</div>
           )}
         </div>
       )}
@@ -232,18 +233,18 @@ export default function DashboardClient({ user }: { user: any }) {
   const walletBlock = (
     <div className="space-y-3">
       {wallet.map(card => (
-        <div key={card.cardId} className="flex items-center gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-colors">
+        <div key={card.cardId} className="flex items-center gap-4 bg-white/50 p-4 rounded-xl border border-nd-navy-light hover:border-nd-gold transition-colors">
           <CardImage card={card} size="md" />
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-slate-100">{card.name}</div>
-            <div className="text-sm text-slate-400">{formatIssuer(card.issuer)} • Fee: ${card.annualFee}/yr • Base: {card.universalCashbackPercent}%</div>
+            <div className="font-semibold text-nd-white">{card.name}</div>
+            <div className="text-sm text-nd-muted">{formatIssuer(card.issuer)} • Fee: ${card.annualFee}/yr • Base: {card.universalCashbackPercent}%</div>
           </div>
-          <button onClick={() => removeFromWallet(card.cardId)} className="text-slate-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all shrink-0">
+          <button onClick={() => removeFromWallet(card.cardId)} className="text-nd-muted hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all shrink-0">
             <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ))}
-      {wallet.length === 0 && <div className="text-slate-500 text-center py-8 bg-slate-950/30 rounded-lg border border-dashed border-slate-800">Your wallet is empty. Search above to add cards.</div>}
+      {wallet.length === 0 && <div className="text-nd-muted text-center py-8 bg-white/30 rounded-lg border border-dashed border-nd-navy-light">Your wallet is empty. Search above to add cards.</div>}
     </div>
   )
 
@@ -259,7 +260,7 @@ export default function DashboardClient({ user }: { user: any }) {
           <p className="text-nd-muted font-bold tracking-widest uppercase">Add the credit cards you currently own to start.</p>
         </div>
         
-        <div className="bg-nd-navy-light/30 backdrop-blur-xl border border-nd-navy-light/50 p-8 sm:p-10 rounded-3xl shadow-2xl">
+        <div className="bg-white/80 backdrop-blur-xl border border-nd-navy-light p-8 sm:p-10 rounded-3xl shadow-sm">
           {searchBlock}
           
           <div className="mt-12 mb-10">
@@ -304,47 +305,90 @@ export default function DashboardClient({ user }: { user: any }) {
   
   return (
     <div className="max-w-6xl mx-auto font-sans">
-      <div className="mb-12 border-b border-nd-navy-light/50 pb-6">
-        <h2 className="text-4xl font-black tracking-tighter mb-2 text-nd-white uppercase">{timeGreeting}, {firstName}</h2>
-        <p className="text-nd-muted text-lg tracking-wide uppercase font-semibold">Your Wallet Overview</p>
+      <div className="mb-8 border-b border-nd-navy-light/50 pb-4">
+        <h2 className="text-5xl mb-1 text-nd-gold-dark capitalize" style={{ fontFamily: 'var(--font-cursive)' }}>{timeGreeting}, {firstName}</h2>
+        <p className="text-nd-muted text-sm tracking-wide uppercase font-semibold">Your Wallet Overview</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-        <Link href="/cards" className="block bg-nd-gold/90 backdrop-blur-xl border border-nd-gold/50 p-8 rounded-3xl shadow-xl hover:bg-nd-gold transition-all cursor-pointer group">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Link href="/cards" className="block bg-white/80 backdrop-blur-xl border border-nd-navy-light p-5 rounded-2xl shadow-sm hover:border-nd-gold transition-all cursor-pointer group">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-nd-navy-dark text-xs tracking-[0.2em] font-bold uppercase mb-4">Total Cards</h3>
-              <p className="text-6xl font-black text-nd-navy-dark">{wallet.length}</p>
+              <h3 className="text-nd-muted text-[10px] tracking-[0.2em] font-bold uppercase mb-2">Total Cards</h3>
+              <p className="text-3xl font-medium text-nd-white">{wallet.length}</p>
             </div>
-            <ArrowRight className="w-8 h-8 text-nd-navy-dark group-hover:translate-x-2 transition-transform" />
+            <ArrowRight className="w-5 h-5 text-nd-gold group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
-        <div className="bg-nd-gold/90 backdrop-blur-xl border border-nd-gold/50 p-8 rounded-3xl shadow-xl">
-          <h3 className="text-nd-navy-dark text-xs tracking-[0.2em] font-bold uppercase mb-4">Annual Fees</h3>
-          <p className="text-6xl font-black text-nd-navy-dark">${totalFees}</p>
+        <div onClick={() => setShowBreakdown(showBreakdown === 'fees' ? null : 'fees')} className="bg-white/80 backdrop-blur-xl border border-nd-navy-light p-5 rounded-2xl shadow-sm hover:border-nd-gold transition-all cursor-pointer group">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-nd-muted text-[10px] tracking-[0.2em] font-bold uppercase mb-2">Annual Fees</h3>
+              <p className="text-3xl font-medium text-nd-white">${totalFees}</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-nd-gold/90 backdrop-blur-xl border border-nd-gold/50 p-8 rounded-3xl shadow-xl">
-          <h3 className="text-nd-navy-dark text-xs tracking-[0.2em] font-bold uppercase mb-4">Welcome Bonus Pts</h3>
-          <p className="text-6xl font-black text-nd-navy-dark tracking-tighter">{formattedOpeningPoints}</p>
+        <div onClick={() => setShowBreakdown(showBreakdown === 'points' ? null : 'points')} className="bg-white/80 backdrop-blur-xl border border-nd-navy-light p-5 rounded-2xl shadow-sm hover:border-nd-gold transition-all cursor-pointer group">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-nd-muted text-[10px] tracking-[0.2em] font-bold uppercase mb-2">Welcome Bonus Pts</h3>
+              <p className="text-3xl font-medium text-nd-white tracking-tighter">{formattedOpeningPoints}</p>
+            </div>
+          </div>
         </div>
       </div>
       
+      {/* Breakdown Section */}
+      {showBreakdown && (
+        <div className="mb-8 p-5 bg-white/90 border border-nd-navy-light rounded-2xl shadow-sm animate-in slide-in-from-top-2">
+          <h3 className="text-xs font-black text-nd-white uppercase tracking-widest mb-4 border-b border-nd-navy-light pb-2">
+            {showBreakdown === 'fees' ? 'Annual Fees Breakdown' : 'Welcome Bonus Breakdown'}
+          </h3>
+          <div className="space-y-3">
+            {[...wallet].sort((a, b) => {
+              const valA = showBreakdown === 'fees' ? (a.annualFee || 0) : (a.offers?.[0]?.amount?.[0]?.amount || 0);
+              const valB = showBreakdown === 'fees' ? (b.annualFee || 0) : (b.offers?.[0]?.amount?.[0]?.amount || 0);
+              return valB - valA;
+            }).map(card => {
+              const points = card.offers?.[0]?.amount?.[0]?.amount || 0;
+              const isFees = showBreakdown === 'fees';
+              const val = isFees ? (card.annualFee || 0) : points;
+              if (!isFees && !val) return null;
+              return (
+                <div key={card.cardId} className="flex justify-between items-center text-sm">
+                  <span className="text-nd-muted flex items-center gap-3">
+                    <CardImage card={card} size="sm" />
+                    {card.name}
+                  </span>
+                  <span className="font-bold text-nd-white">
+                    {isFees ? `$${val}` : val.toLocaleString() + ' pts'}
+                  </span>
+                </div>
+              )
+            })}
+            {showBreakdown !== 'fees' && wallet.every(c => !(c.offers?.[0]?.amount?.[0]?.amount)) && (
+              <div className="text-nd-muted text-sm italic">No welcome bonuses found for your current cards.</div>
+            )}
+          </div>
+        </div>
+      )}
+      
       {/* Ask AI Section */}
-      <div className="mb-16 relative group">
-        <div className="relative z-10 bg-nd-navy-light/30 backdrop-blur-xl flex items-center border border-nd-navy-light/50 rounded-2xl shadow-xl">
-          <Bot className="ml-6 h-8 w-8 text-nd-gold" />
+      <div className="mb-12 relative group">
+        <div className="relative z-10 bg-white/80 backdrop-blur-xl flex items-center border border-nd-navy-light rounded-2xl shadow-sm">
+          <Sparkles className="ml-6 h-6 w-6 text-nd-gold" />
           <input 
             type="text" 
             placeholder="WHERE ARE YOU SHOPPING TODAY?" 
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendChatMessage()}
-            className="w-full bg-transparent py-6 pl-6 pr-6 text-xl font-bold uppercase tracking-wide focus:outline-none text-nd-white placeholder-nd-muted" 
+            className="w-full bg-transparent py-4 pl-4 pr-4 text-lg font-bold uppercase tracking-wide focus:outline-none text-nd-white placeholder-nd-muted" 
           />
           <button 
             onClick={sendChatMessage}
             disabled={isChatLoading || !chatInput.trim()}
-            className="mr-3 bg-nd-gold px-8 py-4 text-nd-navy-dark font-black tracking-widest uppercase hover:bg-nd-gold-light disabled:opacity-50 transition-colors rounded-xl shadow-lg active:translate-y-1"
+            className="mr-2 bg-nd-gold px-6 py-3 text-white font-black tracking-widest uppercase hover:bg-nd-gold-light disabled:opacity-50 transition-colors rounded-xl shadow-sm active:translate-y-1"
           >
             ASK
           </button>
@@ -356,11 +400,11 @@ export default function DashboardClient({ user }: { user: any }) {
             {isChatLoading ? (
               <div className="flex gap-6 justify-start">
                 <div className="w-16 h-16 bg-nd-gold/20 backdrop-blur-md border border-nd-gold/50 rounded-2xl flex items-center justify-center shrink-0">
-                  <Bot className="w-8 h-8 text-nd-gold animate-pulse" />
+                  <Sparkles className="w-8 h-8 text-nd-gold animate-pulse" />
                 </div>
-                <div className="bg-nd-navy-light/30 backdrop-blur-xl border border-nd-navy-light/50 rounded-2xl px-8 py-5 flex items-center gap-4 shadow-xl">
-                  <Loader2 className="w-6 h-6 text-nd-gold animate-spin" />
-                  <span className="text-nd-white font-bold tracking-widest uppercase">Analyzing Data...</span>
+                <div className="bg-white/80 backdrop-blur-xl border border-nd-navy-light rounded-2xl px-6 py-4 flex items-center gap-4 shadow-sm">
+                  <Loader2 className="w-5 h-5 text-nd-gold animate-spin" />
+                  <span className="text-nd-white text-sm font-bold tracking-widest uppercase">Analyzing Data...</span>
                 </div>
               </div>
             ) : aiError ? (
@@ -369,22 +413,22 @@ export default function DashboardClient({ user }: { user: any }) {
               </div>
             ) : aiResult ? (
               <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-300">
-                <h3 className="text-2xl font-black text-nd-white uppercase tracking-tight border-l-4 border-nd-gold pl-4">
+                <h3 className="text-xl font-black text-nd-white uppercase tracking-tight border-l-4 border-nd-gold pl-3">
                   ANALYSIS: <span className="text-nd-gold">{aiResult.merchant || aiResult.category}</span>
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
                   {/* Your Best Card */}
-                  <div className="bg-nd-navy-light/30 backdrop-blur-xl border border-nd-navy-light/50 p-8 rounded-3xl relative shadow-xl flex flex-col overflow-hidden">
-                    <div className="absolute top-0 right-0 bg-nd-gold text-nd-navy-dark text-xs font-black px-4 py-2 uppercase tracking-[0.2em] rounded-bl-2xl">
+                  <div className="bg-white/80 backdrop-blur-xl border border-nd-navy-light p-6 rounded-2xl relative shadow-sm flex flex-col overflow-hidden">
+                    <div className="absolute top-0 right-0 bg-nd-gold text-white text-[10px] font-black px-3 py-1 uppercase tracking-[0.2em] rounded-bl-xl">
                       USE THIS CARD
                     </div>
                     {aiResult.myCard ? (
                       <div className="flex flex-col gap-6 mt-6 flex-1">
                         <CardImage card={aiResult.myCard} size="lg" />
                         <div>
-                          <div className="font-black text-nd-white text-2xl uppercase tracking-tight mb-2">{aiResult.myCard.name}</div>
-                          <p className="text-nd-offwhite font-medium text-lg leading-snug border-l-2 border-nd-gold pl-4">{aiResult.myCardReason}</p>
+                          <div className="font-black text-nd-white text-xl uppercase tracking-tight mb-2">{aiResult.myCard.name}</div>
+                          <p className="text-nd-muted font-medium text-sm leading-snug border-l-2 border-nd-gold pl-3">{aiResult.myCardReason}</p>
                         </div>
                       </div>
                     ) : (
@@ -394,15 +438,15 @@ export default function DashboardClient({ user }: { user: any }) {
                   
                   {/* Best Overall Card */}
                   {aiResult.bestOverallCard && (aiResult.myCard?.cardId !== aiResult.bestOverallCard.cardId) && (
-                    <div className="bg-nd-navy-dark/40 backdrop-blur-xl border border-nd-navy-light/30 p-8 rounded-3xl relative shadow-xl flex flex-col overflow-hidden">
-                      <div className="absolute top-0 right-0 bg-nd-muted text-nd-navy-dark text-xs font-black px-4 py-2 uppercase tracking-[0.2em] rounded-bl-2xl">
+                    <div className="bg-white/50 backdrop-blur-xl border border-nd-navy-light p-6 rounded-2xl relative shadow-sm flex flex-col overflow-hidden">
+                      <div className="absolute top-0 right-0 bg-nd-muted text-white text-[10px] font-black px-3 py-1 uppercase tracking-[0.2em] rounded-bl-xl">
                         TOP ALTERNATIVE
                       </div>
                       <div className="flex flex-col gap-6 mt-6 flex-1">
                         <CardImage card={aiResult.bestOverallCard} size="lg" />
                         <div className="flex-1">
-                          <div className="font-black text-nd-white text-2xl uppercase tracking-tight mb-2">{aiResult.bestOverallCard.name}</div>
-                          <p className="text-nd-muted font-medium text-lg leading-snug">{aiResult.bestOverallReason}</p>
+                          <div className="font-black text-nd-white text-xl uppercase tracking-tight mb-2">{aiResult.bestOverallCard.name}</div>
+                          <p className="text-nd-muted font-medium text-sm leading-snug">{aiResult.bestOverallReason}</p>
                         </div>
                         {aiResult.bestOverallCard.url && (
                           <div className="pt-6 mt-auto">
@@ -410,9 +454,9 @@ export default function DashboardClient({ user }: { user: any }) {
                               href={aiResult.bestOverallCard.url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="flex items-center justify-center gap-3 w-full bg-nd-white/10 hover:bg-nd-white/20 text-nd-white py-4 rounded-xl font-black tracking-widest uppercase transition-colors border border-nd-white/30 backdrop-blur-md"
+                              className="flex items-center justify-center gap-2 w-full bg-nd-gold/10 hover:bg-nd-gold/20 text-nd-gold py-3 rounded-xl text-xs font-black tracking-widest uppercase transition-colors border border-nd-gold/30 backdrop-blur-md"
                             >
-                              APPLY NOW <ExternalLink className="w-5 h-5" />
+                              APPLY NOW <ExternalLink className="w-4 h-4" />
                             </a>
                           </div>
                         )}

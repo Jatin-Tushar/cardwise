@@ -20,7 +20,7 @@ export default async function DashboardPage() {
           </div>
           
           <div className="flex items-center gap-6">
-            <a href="/cards" className="text-sm font-bold tracking-widest uppercase text-nd-gold hover:text-nd-white transition-colors hidden sm:inline-block">
+            <a href="/cards" className="text-sm font-normal tracking-widest uppercase text-nd-gold hover:text-nd-white transition-colors hidden sm:inline-block">
               My Cards
             </a>
 
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
                 await signOut({ redirectTo: "/" })
               }}
             >
-              <button type="submit" className="text-sm font-bold tracking-widest uppercase text-nd-muted hover:text-nd-white transition-colors flex items-center gap-2 group">
+              <button type="submit" className="text-sm font-normal tracking-widest uppercase text-nd-muted hover:text-nd-white transition-colors flex items-center gap-2 group">
                 <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 <span className="hidden sm:inline-block">Sign out</span>
               </button>
