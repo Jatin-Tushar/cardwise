@@ -31,8 +31,14 @@ export default function MyCardsClient() {
   }, [])
 
   const fuse = useMemo(() => new Fuse(allCards, {
-    keys: ['name', 'issuer', 'network'],
-    threshold: 0.3
+    keys: [
+      { name: 'combined', getFn: (card) => `${card.issuer} ${card.name} ${card.network}` },
+      'name', 
+      'issuer', 
+      'network'
+    ],
+    threshold: 0.3,
+    ignoreLocation: true
   }), [allCards])
 
   useEffect(() => {
