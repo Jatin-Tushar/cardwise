@@ -9,7 +9,7 @@ Last Update: 10th May 2026
 
 Cardwise is a credit card optimization platform that tells users which card to pull out of their wallet for every purchase. Users enter the cards they own, select a spending category or describe a purchase in natural language, and Cardwise instantly ranks the best card to use based on rewards, cashback, ROI (rewards minus annual fees), and category bonuses.
 
-V1 ships with: card wallet management, category-based optimization, AI chat for nuanced questions, a spending tracker, and a card tracker.
+V1 ships with: card wallet management, AI chat for nuanced questions, and dashboard summary stats.
 
 ## 2. Problem
 
@@ -72,21 +72,7 @@ The Home page is divided into the following sections from top to bottom:
 - **[Z]x earn rate**: The highest `max_earn_rate` across all cards in the user's wallet (e.g., if the user has a card with 5x on dining and another with 3x on groceries, Z = 5)
 - **$[W] one-time benefits**: Sum of the dollar value of all non-recurring card benefits that the user has not yet claimed this benefit year (e.g., welcome bonuses, statement credits, airport lounge access value)
 
-### Section 2.2: This Week's Actions (Smart Alerts)
-Horizontally scrollable alert cards. Each alert is actionable.
 
-| Alert Type | Example | Action |
-|---|---|---|
-| Transfer Bonus Expiring | "65% Transfer Bonus Expiring Soon: Chase UR → Marriott Bonvoy, ends in 6d" | "Transfer Now →" |
-| Unclaimed Statement Credits | "$688 unclaimed across Amex Gold, Blue Cash Everyday" | "View Credits →" |
-| Welcome Bonus Milestone | "You are $200 away from your Chase Sapphire 60k bonus" | "Track Progress →" |
-| Annual Fee Renewal | "Your Amex Gold $250 annual fee renews in 14 days" | "Review Card →" |
-
-### Flow 2.2.1: Alert Generation Logic
-1. System checks card database for each card in user's wallet
-2. Compares current date against known transfer bonus windows, credit deadlines, and welcome bonus timelines
-3. Ranks alerts by urgency (days remaining) and financial impact (dollar value)
-4. Displays top 2 alerts. "Show More" reveals full list
 
 ### Section 2.3: AI Chat
 
@@ -132,11 +118,7 @@ A full-width natural language input bar prominently displayed below the Smart Al
    - Affiliate link: "Apply Now →"
 4. AI also shows: "From your current cards, [Card] earns 2x on groceries"
 
-### Flow 2.3.4: Context-Aware Chat from Category Pages
-1. User taps "Dining" category on Home
-2. System opens AI chat with pre-filled context: "I'm spending on Dining"
-3. User can refine: "I'm going to a fine dining restaurant in Manhattan, party of 6, estimated bill $800"
-4. AI factors in: earn rate, purchase protection, extended warranty, and any active promotions
+
 
 ### Flow 2.3.5: Edge Cases — AI Chat
 - User asks about a card not in their wallet — AI clarifies "That card isn't in your wallet. Want me to compare it against your current cards?"
@@ -149,172 +131,25 @@ A full-width natural language input bar prominently displayed below the Smart Al
 - Placeholder text: "Ask me anything about your cards..."
 - Tapping expands to full-screen AI chat interface
 
----
 
-## Page 3: Best Cards by Category
+## Page 3: My Cards (Wallet)
 
-### Section 3.1: Category Grid
-A 3-column grid of spending category tiles. Each tile shows:
-- Category icon and name
-- Subcategory description (e.g., "Restaurants, bars, cafes")
-- Best card from user's wallet for that category
-- Earn rate (e.g., "3x POINTS" or "5% CASHBACK")
-
-#### Full Category List (V1)
-
-| Category | Subcategories |
-|---|---|
-| Dining | Restaurants, bars, cafes |
-| Food Delivery | DoorDash, UberEats, Grubhub |
-| Groceries | Supermarkets, grocery stores |
-| Gas | Gas stations, fuel |
-| Streaming | Netflix, Spotify, Disney+, etc. |
-| Transit | Public transportation, rideshare |
-| Flights | Airline tickets, airport purchases |
-| Hotels | Hotel bookings, resort stays |
-| E-commerce Shopping | Amazon, online retail |
-| In-Store Clothing | Mall, department stores, apparel |
-| Electronics | Best Buy, Apple, tech purchases |
-| Car Rental | Hertz, Enterprise, rental agencies |
-| Rent | Monthly rent payments |
-| Services | Car wash, salons, dry cleaning |
-| Online Shopping | General e-commerce, marketplace purchases |
-
-### Flow 3.1.1: Category Tile Tap
-1. User taps a category tile (e.g., "Dining")
-2. System navigates to Category Detail Page
-3. Category context is pre-loaded into the AI chat typing area as: "I'm spending on Dining — which card should I use?"
-
-### Section 3.2: High Value Purchases
-A separate section below the standard categories for big-ticket items:
-
-| Category | Examples |
-|---|---|
-| Car Purchase | New/used vehicle, down payment |
-| House Purchase | Down payment, closing costs |
-| Furniture | Large home furnishings |
-
-### Flow 3.2.1: High Value Purchase Tap
-1. User taps "Car Purchase"
-2. System opens a detail page showing:
-   - Which cards allow large transactions
-   - Which cards offer 0% APR intro periods
-   - Which cards offer purchase protection
-   - Which cards offer extended warranty
-3. AI chat pre-loads: "I'm making a large car purchase — which card maximizes value?"
-
----
-
-
-## Page 4: My Wallet
-
-### Section 4.1: Wallet Summary Bar
-Three stat cards at the top:
-
-| Stat | Display |
-|---|---|
-| Total Cards | e.g., "5 Cards" |
-| Total Annual Fees | e.g., "$325" |
-| Net Value/Year | e.g., "+$363" (rewards earned minus fees) |
-
-### Section 4.2: Cards Grouped by Rewards Program
-Cards are organized by rewards ecosystem:
-- Chase Ultimate Rewards (2 cards, $0 annual fees)
-- American Express Membership Rewards (2 cards, $325 annual fees)
-- Citi ThankYou Points (1 card, $0 annual fees)
-
-Each group is collapsible. Under each group:
-- Visual card image (official card art from database)
+### Section 3.1: Card List
+A list of all cards the user currently has in their wallet.
+- User can search for new cards to add
+- Visual card image
 - Card name and issuer
-- Annual fee, base earn rate, max earn rate
-- Welcome bonus status (e.g., "20,000 pts · $500/3mo")
-- Action buttons: "View Details" | "Edit" | "Delete" | "Bonus History"
+- Remove card button
 
-### Flow 4.2.1: View Card Details
-1. User taps "View Details" on Chase Freedom Flex
-2. System shows full card profile:
-   - All category earn rates in a table
-   - Current quarterly bonus categories (if rotating)
-   - Benefits: purchase protection, extended warranty, cell phone protection
-   - Foreign transaction fee: Yes/No
-   - Credit limit (user-entered, optional)
-   - Annual fee renewal date
+### Flow 3.1.1: Add a New Card
+1. User enters text in the search bar
+2. Fuzzy search checks against the database
+3. User selects a card to add
+4. Wallet is updated instantly
 
-### Flow 4.2.2: Add a New Card
-1. User taps "+ Add Card" button (top-right)
-2. Fuzzy search modal opens
-3. User searches and selects a card
-4. Card is added to wallet with all data auto-populated
-5. Wallet summary stats recalculate instantly
-
-### Flow 4.2.3: Remove a Card
+### Flow 3.1.2: Remove a Card
 1. User taps trash icon on a card
-2. Confirmation dialog: "Remove Chase Freedom Flex from your wallet? This will not affect your actual card account."
-3. User confirms
-4. Card removed. Wallet stats and category recommendations recalculate
-
-### Flow 4.2.4: Compare Cards
-1. User taps "Compare" button (top-right, next to "+ Add Card")
-2. System enters comparison mode: user selects 2-3 cards
-3. System shows side-by-side table:
-   - Annual fee, base rate, category rates, benefits, foreign transaction fees
-4. AI summary at bottom: "For your spending patterns, [Card A] provides $200 more value per year than [Card B]"
-
----
-
-## Page 5: Category Detail Page
-
-### Flow 5.1: Category Landing
-1. User arrives from Home (e.g., tapped "Dining")
-2. Page header: Category name, icon, and description
-3. Two sections:
-
-#### Section A: Best From Your Wallet
-- Ranked list of user's cards for this category
-- Each card shows: earn rate, rewards type, and estimated annual value for this category
-- Top card is highlighted with a "Best Pick" badge
-
-#### Section B: Best Overall (From Database)
-- Top 3 cards from the full database for this category
-- Each card shows: name, issuer, earn rate, annual fee, and "Apply →" affiliate link
-- If user already owns the top-ranked card, show a checkmark: "You already have the best card for this category"
-
-### Flow 5.2: Ask More (AI Integration)
-- Below both sections, a chat input bar with pre-filled context
-- User can ask follow-up questions: "What if I'm spending over $500?" or "Does this card have purchase protection for electronics bought at restaurants?"
-
----
-
-## Page 6: Card Tracker
-
-### Section 6.1: Welcome Bonus Tracker
-Table showing progress toward each card's sign-up bonus:
-
-| Card | Bonus | Requirement | Progress | Deadline | Status |
-|---|---|---|---|---|---|
-| Chase Sapphire Preferred | 60,000 UR | $4,000 in 3 months | $2,800 / $4,000 | 45 days left | On Track |
-| Amex Gold | 60,000 MR | $6,000 in 6 months | $1,200 / $6,000 | 120 days left | At Risk |
-
-### Section 6.2: Annual Fee Tracker
-- Shows all cards with annual fees
-- Renewal dates
-- ROI calculation: "Net value = Rewards earned ($500) - Annual fee ($250) = +$250"
-- Flag cards with negative ROI: "Consider downgrading [Card] — you earned $80 but pay $95/year"
-
-### Section 6.3: Credit Utilization Overview
-- User can optionally enter credit limits per card
-- System shows utilization per card and overall
-- Alerts if any card exceeds 30% utilization
-
----
-
-## Page 7: ROI Analysis
-
-### Flow 7.1: ROI Dashboard
-1. For each card in wallet, calculate: (Total Rewards Value + Credits Used) - Annual Fee = Net Value
-2. Display as a ranked list, best to worst
-3. Cards with negative net value are flagged in red
-4. AI recommendation: "Your Amex Platinum has -$150 net value. The annual fee renews in 60 days. Consider downgrading to Amex Green to save $400/year while keeping MR earning."
+2. Card removed instantly from local storage
 
 ---
 
@@ -358,7 +193,7 @@ We do NOT store card numbers, bank credentials, or financial data. We only store
 |---|---|
 | user_id | Unique identifier |
 | wallet | Array of card_ids from the card database |
-| transactions | Manually entered transactions (amount, category, card, date) |
+
 | preferences | Category weightings, notification settings |
 
 ---
@@ -368,9 +203,7 @@ We do NOT store card numbers, bank credentials, or financial data. We only store
 | Metric | Type | Target | Timeframe |
 |---|---|---|---|
 | Users who add 2+ cards | Activation | 70% of signups | First 7 days |
-| Category tile taps per session | Engagement | 3+ taps/session | Month 1 |
 | AI chat messages per user | Engagement | 5+ messages/week | Month 2 |
-| Transactions logged per user | Retention | 10+/month | Month 3 |
 | Affiliate link clicks | Revenue | 5% CTR on "Apply" links | Month 3 |
 
 ---
