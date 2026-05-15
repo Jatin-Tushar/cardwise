@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react"
 import Fuse from "fuse.js"
-import { Search, Plus, Trash2, CreditCard, ExternalLink, X, ChevronDown } from "lucide-react"
+import { Search, Plus, Trash2, CreditCard, ExternalLink, X, ChevronDown, Loader2 } from "lucide-react"
 import { getCardImageUrl, formatIssuer } from "@/lib/cards"
 import type { CardData } from "@/lib/cards"
+import { getUserWallet, updateUserWallet } from "@/lib/actions"
 
 const formatNetwork = (network: string) => {
   if (!network) return ""
@@ -20,9 +21,22 @@ export default function MyCardsClient() {
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null)
   const [showSearch, setShowSearch] = useState(false)
 
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false)
+  const [isDataLoaded, setIsDataLoaded] = useState(false)
+  
   useEffect(() => {
-    const saved = localStorage.getItem("cardwise_wallet")
-    if (saved) setWallet(JSON.parse(saved))
+    async function loadData() {
+      try {
+        const { wallet, hasCompletedOnboarding } = await getUserWallet();
+        setWallet(wallet);
+        setHasCompletedOnboarding(hasCompletedOnboarding);
+      } catch (err) {
+        console.error("Failed to load user data:", err);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    }
+    loadData();
 
     fetch('https://raw.githubusercontent.com/andenacitelli/credit-card-bonuses-api/main/exports/data.json')
       .then(res => res.json())
@@ -47,20 +61,20 @@ export default function MyCardsClient() {
     setSearchResults(results)
   }, [searchQuery, fuse])
 
-  const addToWallet = (card: CardData) => {
+  const addToWallet = async (card: CardData) => {
     if (wallet.find(c => c.cardId === card.cardId)) return
     const newWallet = [...wallet, card]
     setWallet(newWallet)
-    localStorage.setItem("cardwise_wallet", JSON.stringify(newWallet))
     setSearchQuery("")
     setShowSearch(false)
+    await updateUserWallet(newWallet, hasCompletedOnboarding).catch(console.error)
   }
 
-  const removeFromWallet = (id: string) => {
+  const removeFromWallet = async (id: string) => {
     const newWallet = wallet.filter(c => c.cardId !== id)
     setWallet(newWallet)
-    localStorage.setItem("cardwise_wallet", JSON.stringify(newWallet))
     if (selectedCard?.cardId === id) setSelectedCard(null)
+    await updateUserWallet(newWallet, hasCompletedOnboarding).catch(console.error)
   }
 
   const CardImageBlock = ({ card, size = "md" }: { card: CardData; size?: "sm" | "md" | "lg" }) => {
@@ -77,16 +91,24 @@ export default function MyCardsClient() {
     return <img src={imgUrl} alt={card.name} className={`${sizeClasses[size]} object-cover border border-nd-white/20 rounded-xl shadow-lg`} onError={() => setImgError(true)} />
   }
 
+  if (!isDataLoaded) {
+    return (
+      <div className="max-w-6xl mx-auto pt-32 flex justify-center">
+        <Loader2 className="w-10 h-10 text-nd-gold animate-spin" />
+      </div>
+    )
+  }
+
   return (
-    <div className="max-w-6xl mx-auto font-sans">
+    <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-12 border-b border-nd-navy-light/50 pb-6">
         <div>
-          <h2 className="text-4xl font-black tracking-tighter mb-2 uppercase text-nd-white">My Cards</h2>
-          <p className="text-nd-muted font-bold tracking-widest uppercase">{wallet.length} card{wallet.length !== 1 ? "s" : ""} in your wallet</p>
+          <h2 className="text-4xl font-black tracking-tighter mb-2 text-nd-white">My Cards</h2>
+          <p className="text-nd-muted font-bold tracking-widest">{wallet.length} card{wallet.length !== 1 ? "s" : ""} in your wallet</p>
         </div>
         <button
           onClick={() => setShowSearch(!showSearch)}
-          className="flex items-center gap-2 bg-nd-gold text-nd-navy-dark px-6 py-3 font-black uppercase tracking-widest hover:bg-nd-gold-light active:translate-y-1 transition-all rounded-xl shadow-lg border border-nd-gold/50"
+          className="flex items-center gap-2 bg-nd-gold text-nd-navy-dark px-6 py-3 font-black tracking-widest hover:bg-nd-gold-light active:translate-y-1 transition-all rounded-xl shadow-lg border border-nd-gold/50"
         >
           <Plus className="w-5 h-5" /> Add Card
         </button>
@@ -98,16 +120,16 @@ export default function MyCardsClient() {
           <button onClick={() => { setShowSearch(false); setSearchQuery("") }} className="absolute top-6 right-6 text-nd-muted hover:text-nd-white transition-colors">
             <X className="w-6 h-6" />
           </button>
-          <h3 className="font-black text-nd-white uppercase tracking-widest mb-6">Search & Add a Card</h3>
+          <h3 className="font-black text-nd-white tracking-widest mb-6">Search & Add a Card</h3>
           <div className="relative">
             <Search className="absolute left-4 top-4 h-6 w-6 text-nd-muted" />
             <input
               type="text"
-              placeholder={isLoading ? "LOADING..." : `SEARCH FROM ${allCards.length} CARDS...`}
+              placeholder={isLoading ? "Loading..." : `Search from ${allCards.length} cards...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
-              className="w-full bg-nd-navy-dark/50 border border-nd-navy-light/50 py-4 pl-14 pr-4 rounded-xl text-nd-white uppercase font-bold tracking-widest focus:outline-none focus:border-nd-gold transition-colors placeholder-nd-muted shadow-inner"
+              className="w-full bg-nd-navy-dark/50 border border-nd-navy-light/50 py-4 pl-14 pr-4 rounded-xl text-nd-white font-bold tracking-widest focus:outline-none focus:border-nd-gold transition-colors placeholder-nd-muted shadow-inner"
             />
           </div>
           {searchQuery && (
@@ -116,12 +138,12 @@ export default function MyCardsClient() {
                 <div key={card.cardId} className="flex items-center gap-4 p-4 border-b border-nd-navy-light/30 hover:bg-nd-navy-light/40 transition-colors cursor-pointer group" onClick={() => addToWallet(card)}>
                   <CardImageBlock card={card} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-black text-nd-white uppercase tracking-wide truncate">{card.name}</div>
-                    <div className="text-xs text-nd-gold font-bold tracking-widest uppercase mt-1">{formatIssuer(card.issuer)} • ${card.annualFee}/YR</div>
+                    <div className="font-black text-nd-white tracking-wide truncate">{card.name}</div>
+                    <div className="text-xs text-nd-gold font-bold tracking-widest mt-1">{formatIssuer(card.issuer)} • ${card.annualFee}/YR</div>
                   </div>
                   <Plus className="w-6 h-6 text-nd-muted group-hover:text-nd-gold transition-colors shrink-0" />
                 </div>
-              )) : <div className="p-6 text-center font-bold tracking-widest uppercase text-nd-muted">No cards found</div>}
+              )) : <div className="p-6 text-center font-bold tracking-widest text-nd-muted">No cards found</div>}
             </div>
           )}
         </div>
@@ -131,9 +153,9 @@ export default function MyCardsClient() {
         {wallet.length === 0 ? (
           <div className="bg-nd-navy-light/20 backdrop-blur-xl border border-nd-navy-light/50 rounded-3xl p-16 text-center max-w-2xl mx-auto shadow-2xl">
             <CreditCard className="w-16 h-16 text-nd-muted mx-auto mb-6" />
-            <p className="text-nd-white font-bold tracking-widest uppercase mb-6 text-xl">No cards in your wallet yet.</p>
-            <button onClick={() => setShowSearch(true)} className="text-nd-gold hover:text-nd-white font-black tracking-widest uppercase transition-colors border-b-2 border-nd-gold pb-1 hover:border-nd-white">
-              + ADD YOUR FIRST CARD
+            <p className="text-nd-white font-bold tracking-widest mb-6 text-xl">No cards in your wallet yet.</p>
+            <button onClick={() => setShowSearch(true)} className="text-nd-gold hover:text-nd-white font-black tracking-widest transition-colors border-b-2 border-nd-gold pb-1 hover:border-nd-white">
+              + Add your first card
             </button>
           </div>
         ) : (
@@ -149,14 +171,14 @@ export default function MyCardsClient() {
                     <div className="flex items-start gap-6">
                       <CardImageBlock card={card} size="md" />
                       <div className="flex-1 min-w-0">
-                        <div className="font-black text-nd-white uppercase tracking-wide truncate group-hover:text-nd-gold transition-colors">{card.name}</div>
-                        <div className="text-xs text-nd-muted font-bold uppercase tracking-widest mt-2">{formatIssuer(card.issuer)}</div>
-                        <div className="text-xs text-nd-muted font-bold uppercase tracking-widest mt-1">{formatNetwork(card.network)}</div>
+                        <div className="font-black text-nd-white tracking-wide truncate group-hover:text-nd-gold transition-colors">{card.name}</div>
+                        <div className="text-xs text-nd-muted font-bold tracking-widest mt-2">{formatIssuer(card.issuer)}</div>
+                        <div className="text-xs text-nd-muted font-bold tracking-widest mt-1">{formatNetwork(card.network)}</div>
                       </div>
                     </div>
                     <div className="flex justify-between items-center mt-6 pt-4 border-t border-nd-navy-light/50">
-                      <div className="text-sm font-black text-nd-white uppercase tracking-widest">${card.annualFee}<span className="text-nd-muted">/YR</span></div>
-                      <div className="text-sm font-black text-nd-gold uppercase tracking-widest">{card.universalCashbackPercent}% BASE</div>
+                      <div className="text-sm font-black text-nd-white tracking-widest">${card.annualFee}<span className="text-nd-muted">/YR</span></div>
+                      <div className="text-sm font-black text-nd-gold tracking-widest">{card.universalCashbackPercent}% BASE</div>
                     </div>
                   </div>
 
@@ -164,26 +186,26 @@ export default function MyCardsClient() {
                     <div className="bg-nd-navy-dark/60 backdrop-blur-lg border-t border-nd-gold/50 p-6 px-8 animate-in slide-in-from-top-4 fade-in duration-300">
                       <div className="space-y-4 mb-8">
                         <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
-                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Network</span>
-                          <span className="text-sm font-black uppercase tracking-widest text-nd-white">{formatNetwork(card.network)}</span>
+                          <span className="text-sm font-bold tracking-widest text-nd-muted">Network</span>
+                          <span className="text-sm font-black tracking-widest text-nd-white">{formatNetwork(card.network)}</span>
                         </div>
                         <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
-                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Annual Fee</span>
-                          <span className="text-sm font-black uppercase tracking-widest text-nd-white">${card.annualFee}{card.isAnnualFeeWaived ? " (waived)" : ""}</span>
+                          <span className="text-sm font-bold tracking-widest text-nd-muted">Annual Fee</span>
+                          <span className="text-sm font-black tracking-widest text-nd-white">${card.annualFee}{card.isAnnualFeeWaived ? " (waived)" : ""}</span>
                         </div>
                         <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
-                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Base Cashback</span>
-                          <span className="text-sm font-black uppercase tracking-widest text-nd-gold">{card.universalCashbackPercent}%</span>
+                          <span className="text-sm font-bold tracking-widest text-nd-muted">Base Cashback</span>
+                          <span className="text-sm font-black tracking-widest text-nd-gold">{card.universalCashbackPercent}%</span>
                         </div>
                         <div className="flex justify-between py-3 border-b border-nd-navy-light/30">
-                          <span className="text-sm font-bold uppercase tracking-widest text-nd-muted">Type</span>
-                          <span className="text-sm font-black uppercase tracking-widest text-nd-white">{card.isBusiness ? "Business" : "Personal"}</span>
+                          <span className="text-sm font-bold tracking-widest text-nd-muted">Type</span>
+                          <span className="text-sm font-black tracking-widest text-nd-white">{card.isBusiness ? "Business" : "Personal"}</span>
                         </div>
                         {card.offers && card.offers.length > 0 && (
                           <div className="py-3 border-b border-nd-navy-light/30">
-                            <span className="text-sm font-bold uppercase tracking-widest text-nd-muted block mb-2">Sign-up Bonus</span>
-                            <span className="text-sm font-black uppercase tracking-wide text-nd-gold">
-                              SPEND ${card.offers[0].spend?.toLocaleString()} IN {card.offers[0].days} DAYS
+                            <span className="text-sm font-bold tracking-widest text-nd-muted block mb-2">Sign-up Bonus</span>
+                            <span className="text-sm font-black tracking-wide text-nd-gold">
+                              Spend ${card.offers[0].spend?.toLocaleString()} in {card.offers[0].days} days
                             </span>
                           </div>
                         )}
@@ -191,15 +213,15 @@ export default function MyCardsClient() {
 
                       <div className="flex gap-4">
                         {card.url && (
-                          <a href={card.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex flex-1 items-center justify-center gap-3 bg-nd-white/10 hover:bg-nd-white/20 text-nd-white py-4 rounded-xl font-black tracking-widest uppercase transition-colors border border-nd-white/30 backdrop-blur-md">
-                            <ExternalLink className="w-5 h-5" /> VIEW SITE
+                          <a href={card.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex flex-1 items-center justify-center gap-3 bg-nd-white/10 hover:bg-nd-white/20 text-nd-white py-4 rounded-xl font-black tracking-widest transition-colors border border-nd-white/30 backdrop-blur-md">
+                            <ExternalLink className="w-5 h-5" /> View Site
                           </a>
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); removeFromWallet(card.cardId); }}
-                          className="flex flex-1 items-center justify-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 py-4 rounded-xl font-black tracking-widest uppercase transition-colors"
+                          className="flex flex-1 items-center justify-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 py-4 rounded-xl font-black tracking-widest transition-colors"
                         >
-                          <Trash2 className="w-5 h-5" /> REMOVE
+                          <Trash2 className="w-5 h-5" /> Remove
                         </button>
                       </div>
                     </div>
