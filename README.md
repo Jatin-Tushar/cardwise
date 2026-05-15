@@ -20,24 +20,5 @@ Tushar and Jatin wanted a solution that wasn't just another spreadsheet or a clu
 - **Seamless Onboarding**: A high-speed search interface that lets you build your digital wallet in seconds.
 - **Refined Aesthetics**: A premium interface built with a curated high-contrast design and clean Helvetica typography.
 
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js (App Router)
-- **Database & Auth**: Supabase
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Typography**: Helvetica System Stack
-
-## 📁 Project Structure
-
-- `src/app`: Application routing and page layouts.
-- `src/components`: Feature-specific UI components (Dashboard, Wallet, Search).
-- `src/lib`: Core logic, server actions, and card data utilities.
-- `src/utils`: Infrastructure configurations for Supabase and middleware.
-
-## 🚦 Getting Started
-
-To run CardWise, ensure you have your Supabase environment variables configured (`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`). Install dependencies using your preferred package manager and start the development server to begin optimizing your rewards.
-
 ---
 *Created with ❤️ by Tushar & Jatin.*
