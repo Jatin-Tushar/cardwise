@@ -313,9 +313,7 @@ export default function DashboardClient({ user }: { user: any }) {
     return sum + points;
   }, 0);
   
-  const formattedOpeningPoints = totalOpeningPoints > 1000 
-    ? (totalOpeningPoints / 1000).toFixed(0) + "K" 
-    : totalOpeningPoints.toString();
+  const formattedOpeningPoints = totalOpeningPoints.toLocaleString();
 
   const hour = new Date().getHours()
   const timeGreeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening"
